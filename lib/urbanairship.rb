@@ -142,7 +142,7 @@ module Urbanairship
       request.body = options[:body] if options[:body]
       request["Accept"] = "application/vnd.urbanairship+json; version=#{options[:version]};"  if options[:version]
 
-      with_timeout_or_not options[:use_timeout] do
+      with_timeout_or_not options.delete(:use_timeout) do
         start_time = Time.now
         response = http_client.request(request)
         log_request_and_response(request, response, Time.now - start_time)
