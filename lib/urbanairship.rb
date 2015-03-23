@@ -50,7 +50,7 @@ module Urbanairship
 
     def push(options = {})
       body = parse_push_options(options.dup).to_json
-      do_request(:post, "/api/push/", :body => body, :authenticate_with => :master_secret, :version => options[:version])
+      do_request(:post, "/api/push/", :body => body, :authenticate_with => :master_secret, :version => options[:version], :use_timeout => options.fetch(:use_timeout, true))
     end
 
     def push_to_segment(options = {})
@@ -142,7 +142,7 @@ module Urbanairship
       request.body = options[:body] if options[:body]
       request["Accept"] = "application/vnd.urbanairship+json; version=#{options[:version]};"  if options[:version]
 
-      Timer.timeout(request_timeout) do
+      with_timeout_or_not options[:use_timeout] do
         start_time = Time.now
         response = http_client.request(request)
         log_request_and_response(request, response, Time.now - start_time)
@@ -153,6 +153,14 @@ module Urbanairship
         logger.error "Urbanairship request timed out after #{request_timeout} seconds: [#{http_method} #{request.path} #{request.body}]"
       end
       Urbanairship::Response.wrap(nil, :body => {'error' => 'Request timeout'}, :code => '503')
+    end
+
+    def with_timeout_or_not(use_timeout, &block)
+      if use_timeout
+        Timer.timeout request_timeout, &block
+      else
+        yield
+      end
     end
 
     def verify_configuration_values(*symbols)
