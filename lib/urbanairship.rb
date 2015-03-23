@@ -142,7 +142,9 @@ module Urbanairship
       request.body = options[:body] if options[:body]
       request["Accept"] = "application/vnd.urbanairship+json; version=#{options[:version]};"  if options[:version]
 
-      with_timeout_or_not options.delete(:use_timeout) do
+      use_timeout = options.delete(:use_timeout)
+
+      with_timeout_or_not use_timeout do
         start_time = Time.now
         response = http_client.request(request)
         log_request_and_response(request, response, Time.now - start_time)
@@ -181,6 +183,7 @@ module Urbanairship
       hash[:aliases] = hash[:aliases].map{|a| a.to_s} unless hash[:aliases].nil?
       hash[:schedule_for] = hash[:schedule_for].map{|elem| process_scheduled_elem(elem)} unless hash[:schedule_for].nil?
       hash.delete(:version)
+      hash.delete(:use_timeout)
       hash
     end
 
